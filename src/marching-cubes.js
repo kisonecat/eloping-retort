@@ -1,7 +1,7 @@
 import {Face3, Vector2, Vector3, Geometry} from 'three';
 import {edgeTable, triTable} from './marching-cubes-data';
 
-export function functionToGeometry(f, gradient, size) {
+export function functionToGeometry(f, gradient, options, size) {
     // number of cubes along a side
     if (size === undefined)
 	size = 20;
@@ -10,16 +10,29 @@ export function functionToGeometry(f, gradient, size) {
     var axisMax =  3;
     var axisRange = axisMax - axisMin;
     var points = [];
-    var values = [];    
+    var values = [];
+
+    var minX = options.minX;
+    if (minX == undefined) minX = axisMin;
+    var minY = options.minY;
+    if (minY == undefined) minY = axisMin;
+    var minZ = options.minZ;
+    if (minZ == undefined) minZ = axisMin;
+    var maxX = options.maxX;
+    if (maxX == undefined) maxX = axisMax;
+    var maxY = options.maxY;
+    if (maxY == undefined) maxY = axisMax;
+    var maxZ = options.maxZ;
+    if (maxZ == undefined) maxZ = axisMax;
     
     // Generate a list of 3D points and values at those points
     for (var k = 0; k < size; k++) {
 	for (var j = 0; j < size; j++) {
 	    for (var i = 0; i < size; i++) {
 		// actual values
-		var x = axisMin + axisRange * i / (size - 1);
-		var y = axisMin + axisRange * j / (size - 1);
-		var z = axisMin + axisRange * k / (size - 1);
+		var x = minX + (maxX - minX) * i / (size - 1);
+		var y = minY + (maxY - minY) * j / (size - 1);
+		var z = minZ + (maxZ - minZ) * k / (size - 1);		
 		points.push( new Vector3(x,y,z) );
 		var value = f(x,y,z);
 		values.push( value );
