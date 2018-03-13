@@ -1,4 +1,4 @@
-import {Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, DoubleSide, MeshPhongMaterial, MeshNormalMaterial, Mesh, PointLight, AmbientLight, Clock, Vector3} from 'three';
+import {AxesHelper, Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, DoubleSide, MeshPhongMaterial, MeshNormalMaterial, Mesh, PointLight, AmbientLight, Clock, Vector3} from 'three';
 
 import $ from 'jquery';
 import {TrackballControls} from './TrackballControls';
@@ -18,6 +18,7 @@ import {functionToGeometry} from './marching-cubes';
 var camera, scene, renderer;
 var geometry, material, mesh;
 var trackballControls;
+var axes;
 
 function gradient(code) {
     var f = math.parse(code);
@@ -74,16 +75,29 @@ function drawSurface(value) {
 window.onload = function() {
     var FizzyText = function() {
 	this.bounds = '1.0 - x*x - y*y + z';
+	this.axes = false;
     };
 
     var parameters = new FizzyText();
     var functionText = gui.add(parameters, 'bounds');
-
+    var axesCheckbox = gui.add(parameters, "axes");
     functionText.onChange(drawSurface);
 
     init();
     animate();
- 
+
+    axesCheckbox.onChange( function(v) {
+	if (axes) {
+	    scene.remove(axes);
+	}
+	
+	if (v) {
+	    axes = new AxesHelper(100);
+	    scene.add(axes);
+	}
+    });
+
+    
     function init() {
 	// 0: fps, 1: ms, 2: mb, 3+: custom
 	stats.showPanel( 0 );
