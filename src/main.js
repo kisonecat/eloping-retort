@@ -73,19 +73,17 @@ function drawSurface(value) {
 }
 
 window.onload = function() {
-    var FizzyText = function() {
+    var Parameters = function() {
 	this.bounds = '1.0 - x*x - y*y + z';
 	this.axes = false;
     };
 
-    var parameters = new FizzyText();
+    var parameters = new Parameters();
+    
     var functionText = gui.add(parameters, 'bounds');
-    var axesCheckbox = gui.add(parameters, "axes");
     functionText.onChange(drawSurface);
 
-    init();
-    animate();
-
+    var axesCheckbox = gui.add(parameters, "axes");
     axesCheckbox.onChange( function(v) {
 	if (axes) {
 	    scene.remove(axes);
@@ -156,5 +154,8 @@ window.onload = function() {
 
 	requestAnimationFrame( animate );
     }
+
+    init();
+    animate();
 };
 
