@@ -1,9 +1,10 @@
 import {Face3, Vector2, Vector3, Geometry} from 'three';
 import {edgeTable, triTable} from './marching-cubes-data';
 
-export function functionToGeometry(f) {
+export function functionToGeometry(f, gradient, size) {
     // number of cubes along a side
-    var size = 100;
+    if (size === undefined)
+	size = 20;
     
     var axisMin = -3;
     var axisMax =  3;
@@ -161,20 +162,29 @@ export function functionToGeometry(f) {
 		//   since the 16th entry in each row is a -1.
 		while ( triTable[ cubeindex + i ] != -1 ) 
 		{
-			var index1 = triTable[cubeindex + i];
-			var index2 = triTable[cubeindex + i + 1];
-			var index3 = triTable[cubeindex + i + 2];
-			
-			geometry.vertices.push( vlist[index1].clone() );
-			geometry.vertices.push( vlist[index2].clone() );
-			geometry.vertices.push( vlist[index3].clone() );
-			var face = new Face3(vertexIndex, vertexIndex+1, vertexIndex+2);
-			geometry.faces.push( face );
+		    var index1 = triTable[cubeindex + i];
+		    var index2 = triTable[cubeindex + i + 1];
+		    var index3 = triTable[cubeindex + i + 2];
+		    
+		    geometry.vertices.push( vlist[index1].clone() );
+		    geometry.vertices.push( vlist[index2].clone() );
+		    geometry.vertices.push( vlist[index3].clone() );
 
-			geometry.faceVertexUvs[ 0 ].push( [ new Vector2(0,0), new Vector2(0,1), new Vector2(1,1) ] );
+		    var vertexNormals = [
+			gradient(vlist[index1].x,vlist[index1].y,vlist[index1].z),
+			gradient(vlist[index2].x,vlist[index2].y,vlist[index2].z),
+			gradient(vlist[index3].x,vlist[index3].y,vlist[index3].z)
+		    ];
 
-			vertexIndex += 3;
-			i += 3;
+		    var face = new Face3(vertexIndex, vertexIndex+1, vertexIndex+2,
+					 vertexNormals);
+		    
+		    geometry.faces.push( face );
+
+		    geometry.faceVertexUvs[ 0 ].push( [ new Vector2(0,0), new Vector2(0,1), new Vector2(1,1) ] );
+
+		    vertexIndex += 3;
+		    i += 3;
 		}
 	    }
 	}
@@ -183,7 +193,7 @@ export function functionToGeometry(f) {
 	
     //geometry.computeCentroids();
     geometry.computeFaceNormals();
-    geometry.computeVertexNormals();
+    //geometry.computeVertexNormals();
 
     return geometry;
 }

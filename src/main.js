@@ -1,7 +1,9 @@
-import {Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, DoubleSide, MeshPhongMaterial, MeshNormalMaterial, Mesh, PointLight, AmbientLight, Clock} from 'three';
+import {Scene, PerspectiveCamera, WebGLRenderer, BoxGeometry, DoubleSide, MeshPhongMaterial, MeshNormalMaterial, Mesh, PointLight, AmbientLight, Clock, Vector3} from 'three';
 
 import $ from 'jquery';
 import {TrackballControls} from './TrackballControls';
+
+import math from 'mathjs';
 
 import dat from 'dat.gui';
 const gui = new dat.GUI();
@@ -17,6 +19,35 @@ var camera, scene, renderer;
 var geometry, material, mesh;
 var trackballControls;
 
+function gradient(code) {
+    // BADBAD: need to replace other variables with things in terms of x,y,z
+    var dx = math.derivative(code, 'x');
+    var dy = math.derivative(code, 'y');
+    var dz = math.derivative(code, 'z');
+    return function(x,y,z) {
+	var bindings = {x:x, y:y, z:z};
+	return new Vector3( dx.eval(bindings),
+			    dy.eval(bindings),
+			    dz.eval(bindings) );
+    };
+}
+
+function drawSurface(value) {
+    var code = math.compile(value);
+    scene.remove( mesh );
+    geometry = functionToGeometry( function(x,y,z) {
+	var rho = math.sqrt(x*x+y*y+z*z);
+	return code.eval({x:x,y:y,z:z,
+			  r: math.sqrt(x*x+y*y),
+			  rho: rho,
+			  theta: math.atan2(y,x),
+			  phi: math.acos(z/rho)
+			 });
+    }, gradient(value) );
+    mesh = new Mesh( geometry, material );
+    scene.add( mesh );
+}
+
 window.onload = function() {
     var FizzyText = function() {
 	this.bounds = '1.0 - x*x - y*y + z';
@@ -25,20 +56,7 @@ window.onload = function() {
     var parameters = new FizzyText();
     var functionText = gui.add(parameters, 'bounds');
 
-    functionText.onChange(function(value) {
-	//try {
-	//console.log("function(x,y,z) { return " + value + ";}");
-	var f = new Function('x', 'y', 'z', 'return ' + value + ";");
-	//var f = function(x,y,z) { return 3 - x*x-y*y- z*z;}
-	scene.remove( mesh );
-	geometry = functionToGeometry( f );
-	mesh = new Mesh( geometry, material );
-	scene.add( mesh );
-    //}
-	//catch (e) {
-	//console.log(e);
-    //}
-    });
+    functionText.onChange(drawSurface);
 
     init();
     animate();
@@ -64,28 +82,25 @@ window.onload = function() {
 	});
 
 	scene = new Scene();
-
+	scene.add( camera );
+	
 	var light1 = new PointLight(0xff0000);
-        light1.position.set(10,10,0);
-        scene.add(light1);
+        light1.position.set(10,10,10);
+        camera.add(light1);
 
 	var light2 = new PointLight(0x00ffff);
-        light2.position.set(-10,-10,3);
-        scene.add(light2);	
+        light2.position.set(-10,-10,-10);
+        camera.add(light2);	
 
 	var ambientLight = new AmbientLight( 0x202020 ); // soft white light
 	scene.add( ambientLight );
 	
 	material = new MeshPhongMaterial({color: 0xffffff, side: DoubleSide});
 
-	geometry = functionToGeometry( function(x,y,z) {
-	    return 1.0 - x*x - y*y + z;
-	});
-	
-	mesh = new Mesh( geometry, material );
-	scene.add( mesh );
+	drawSurface(parameters.bounds);
 	
 	renderer = new WebGLRenderer( { antialias: true } );
+	renderer.setClearColor( 0xffffff, 1);	
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	document.body.appendChild( renderer.domElement );
 

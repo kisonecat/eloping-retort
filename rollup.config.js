@@ -1,6 +1,5 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
-import ThreeLegacyImport from 'rollup-plugin-threejs-legacy-import';
 
 export default {
     input: 'src/main.js',
@@ -12,7 +11,6 @@ export default {
 	}
     },
     plugins: [
-	ThreeLegacyImport({}),
 	resolve({
 	    // use "module" field for ES6 module if possible
 	    module: true, // Default: true
