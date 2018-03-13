@@ -20,15 +20,38 @@ var geometry, material, mesh;
 var trackballControls;
 
 function gradient(code) {
-    // BADBAD: need to replace other variables with things in terms of x,y,z
-    var dx = math.derivative(code, 'x');
-    var dy = math.derivative(code, 'y');
-    var dz = math.derivative(code, 'z');
+    var f = math.parse(code);
+    
+    var transformed = f.transform(function (node, path, parent) {
+	if (node.isSymbolNode && node.name === 'rho') {
+	    return new math.parse('sqrt(x^2+y^2+z^2)');
+	}
+	if (node.isSymbolNode && node.name === 'r') {
+	    return new math.parse('sqrt(x^2+y^2)');
+	}	
+	if (node.isSymbolNode && node.name === 'phi') {
+	    return new math.parse('acos(z/sqrt(x^2+y^2+z^2))');
+	}	
+	if (node.isSymbolNode && node.name === 'theta') {
+	    return new math.parse('tan(y/x)');
+	}	
+	
+	return node;
+    });
+    
+    var dx = math.derivative(transformed, 'x');
+    var dy = math.derivative(transformed, 'y');
+    var dz = math.derivative(transformed, 'z');
+    
     return function(x,y,z) {
 	var bindings = {x:x, y:y, z:z};
-	return new Vector3( dx.eval(bindings),
-			    dy.eval(bindings),
-			    dz.eval(bindings) );
+	try {
+	    return new Vector3( dx.eval(bindings),
+				dy.eval(bindings),
+				dz.eval(bindings) );
+	} catch (e) {
+	    return new Vector3(0,0,0);
+	}
     };
 }
 
